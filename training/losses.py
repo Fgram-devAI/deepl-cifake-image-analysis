@@ -1,7 +1,9 @@
 """Loss functions for CIFAR-100 binary (and future multiclass) tasks."""
 
 import tensorflow as tf
-from tensorflow.keras.losses import BinaryCrossentropy, Loss
+
+BinaryCrossentropy = tf.keras.losses.BinaryCrossentropy
+Loss = tf.keras.losses.Loss
 
 
 def get_loss(head: str = "binary") -> Loss:

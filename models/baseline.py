@@ -1,7 +1,9 @@
 """Baseline CNN for CIFAR-100 binary tasks (image view)."""
 
-from tensorflow import keras
-from tensorflow.keras import layers
+import tensorflow as tf
+
+keras = tf.keras
+layers = tf.keras.layers
 
 
 def build_baseline_cnn(

@@ -8,7 +8,6 @@ from typing import Any, Dict, Optional, Tuple
 import numpy as np
 import tensorflow as tf
 import yaml
-from tensorflow.keras.optimizers import Adam
 
 from data import (
     Cifar100Split,
@@ -22,6 +21,8 @@ from training.callbacks import get_callbacks
 from training.class_weights import compute_balanced_class_weights
 from training.losses import get_loss
 from training.splits import stratified_train_val_split
+
+Adam = tf.keras.optimizers.Adam
 
 
 def load_config(config_path) -> Dict[str, Any]:

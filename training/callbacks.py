@@ -4,11 +4,11 @@ import json
 from pathlib import Path
 from typing import Union
 
-from tensorflow.keras.callbacks import (
-    Callback,
-    CSVLogger,
-    EarlyStopping,
-)
+import tensorflow as tf
+
+Callback = tf.keras.callbacks.Callback
+CSVLogger = tf.keras.callbacks.CSVLogger
+EarlyStopping = tf.keras.callbacks.EarlyStopping
 
 
 class JSONLogger(Callback):

@@ -8,6 +8,11 @@ Each training run directory is expected to contain:
 - ``metrics.json``: required — the run is skipped if absent or malformed.
 - ``config.yaml``: optional — used to populate ``task_type``, ``label_level``,
   and ``target_labels``.  If missing, those columns are left as empty strings.
+
+Both flat and grouped result layouts are supported:
+
+- ``results/<run_name>/metrics.json``
+- ``results/<task_name>/<run_name>/metrics.json``
 """
 
 from __future__ import annotations
@@ -23,6 +28,7 @@ import yaml
 
 # Fixed column order used in every CSV row.
 COLUMNS = [
+    "task_name",
     "run_name",
     "task_type",
     "label_level",
@@ -69,12 +75,31 @@ def _str(value: Any) -> str:
     return str(value)
 
 
-def summarize_runs(results_dir: Path) -> list[dict[str, str]]:
-    """Scan *results_dir* for training run sub-directories and collect metrics.
+def _iter_run_dirs(results_dir: Path) -> list[Path]:
+    """Return directories below *results_dir* that contain ``metrics.json``."""
+    return sorted(
+        {
+            metrics_path.parent
+            for metrics_path in results_dir.rglob("metrics.json")
+            if metrics_path.is_file()
+        }
+    )
 
-    Each first-level sub-directory is expected to contain ``metrics.json`` and,
-    optionally, ``config.yaml``.  Directories without ``metrics.json`` (or with
-    a malformed one) are skipped with a warning to *stderr*.
+
+def _task_name_for_run(results_dir: Path, run_dir: Path) -> str:
+    """Return the grouped task folder name for *run_dir*, or empty if flat."""
+    relative = run_dir.relative_to(results_dir)
+    if len(relative.parts) >= 2:
+        return relative.parts[0]
+    return ""
+
+
+def summarize_runs(results_dir: Path) -> list[dict[str, str]]:
+    """Scan *results_dir* recursively for training runs and collect metrics.
+
+    Each run directory is expected to contain ``metrics.json`` and, optionally,
+    ``config.yaml``.  Both flat ``results/<run_name>`` and grouped
+    ``results/<task_name>/<run_name>`` layouts are supported.
 
     Parameters
     ----------
@@ -97,14 +122,8 @@ def summarize_runs(results_dir: Path) -> list[dict[str, str]]:
         )
         return rows
 
-    for run_dir in sorted(results_dir.iterdir()):
-        if not run_dir.is_dir():
-            continue
-
+    for run_dir in _iter_run_dirs(results_dir):
         metrics_path = run_dir / "metrics.json"
-        if not metrics_path.exists():
-            continue
-
         metrics = _load_json(metrics_path)
         if metrics is None:
             # Warning already printed by _load_json.
@@ -112,6 +131,7 @@ def summarize_runs(results_dir: Path) -> list[dict[str, str]]:
 
         # Start with a blank row so every column is always present.
         row: dict[str, str] = {col: "" for col in COLUMNS}
+        row["task_name"] = _task_name_for_run(results_dir, run_dir)
         row["run_name"] = run_dir.name
 
         # --- Config (optional) -------------------------------------------
@@ -120,11 +140,16 @@ def summarize_runs(results_dir: Path) -> list[dict[str, str]]:
         if config is not None:
             task_section = config.get("task") or {}
             task_type = task_section.get("type", "")
-            row["task_type"] = _str(task_type) if task_type else "unknown"
             row["label_level"] = _str(task_section.get("label_level", ""))
             positive_labels = task_section.get("positive_label_names")
             if positive_labels:
                 row["target_labels"] = ";".join(str(lbl) for lbl in positive_labels)
+            if task_type:
+                row["task_type"] = _str(task_type)
+            elif positive_labels:
+                row["task_type"] = "binary"
+            else:
+                row["task_type"] = "unknown"
         else:
             row["task_type"] = "unknown"
 

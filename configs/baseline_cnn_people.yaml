@@ -1,8 +1,9 @@
 architecture: baseline_cnn
-run_name: baseline_cnn_people
+run_name: baseline_cnn_lr_1e-4
 seed: 42
 
 task:
+  type: binary
   label_level: coarse
   positive_label_names:
     - people
@@ -25,6 +26,6 @@ early_stopping:
   monitor: val_loss
   patience: 5
 
-output_dir: results
+output_dir: results/people
 save_weights: true
 subset_size: null

@@ -5,13 +5,14 @@
 # superclass-vs-rest baseline.
 
 architecture: baseline_cnn
-run_name: baseline_cnn_cow
+run_name: baseline_cnn_lr_0.001
 
 # Reproducibility
 seed: 42
 
 # Task selection
 task:
+  type: binary
   label_level: fine
   positive_label_names:
     - cow
@@ -41,7 +42,7 @@ early_stopping:
   patience: 5
 
 # Output
-output_dir: results
+output_dir: results/cow
 save_weights: true
 
 # Optional dev override: set to a positive int for a smoke run on a stratified

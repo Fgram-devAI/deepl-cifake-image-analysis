@@ -1,8 +1,9 @@
 architecture: baseline_cnn
-run_name: baseline_cnn_food_containers
+run_name: baseline_cnn_lr_3e-5_45ep_dropout_0.3
 seed: 42
 
 task:
+  type: binary
   label_level: coarse
   positive_label_names:
     - food_containers
@@ -17,14 +18,14 @@ class_imbalance:
 batch_size: 64
 shuffle_buffer: 4096
 dropout: 0.3
-epochs: 20
+epochs: 45
 optimizer: adam
-learning_rate: 1e-4
+learning_rate: 3e-5
 
 early_stopping:
   monitor: val_loss
   patience: 5
 
-output_dir: results
+output_dir: results/food_containers
 save_weights: true
 subset_size: null

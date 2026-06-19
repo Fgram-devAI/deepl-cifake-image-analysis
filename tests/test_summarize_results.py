@@ -84,6 +84,7 @@ def test_summarize_binary_run_produces_expected_row(tmp_path: Path) -> None:
 
     assert len(rows) == 1
     row = rows[0]
+    assert row["task_name"] == ""
     assert row["run_name"] == "run_a"
     assert row["task_type"] == "binary"
     assert row["label_level"] == "coarse"
@@ -107,6 +108,7 @@ def test_summarize_multiclass_run_produces_expected_row(tmp_path: Path) -> None:
 
     assert len(rows) == 1
     row = rows[0]
+    assert row["task_name"] == ""
     assert row["task_type"] == "multiclass"
     assert row["label_level"] == "fine"
     assert row["target_labels"] == ""
@@ -201,3 +203,44 @@ def test_summarize_handles_multiple_target_labels(tmp_path: Path) -> None:
 
     assert len(rows) == 1
     assert rows[0]["target_labels"] == "aquatic_mammals;fish"
+
+
+def test_summarize_infers_legacy_binary_config_without_task_type(
+    tmp_path: Path,
+) -> None:
+    results_dir = tmp_path / "results"
+    config = {
+        "run_name": "legacy_binary",
+        "task": {
+            "label_level": "coarse",
+            "positive_label_names": ["food_containers"],
+        },
+    }
+    _make_run(results_dir, "legacy_binary", metrics=BINARY_METRICS, config=config)
+
+    rows = summarize_runs(results_dir)
+
+    assert len(rows) == 1
+    assert rows[0]["task_type"] == "binary"
+    assert rows[0]["target_labels"] == "food_containers"
+
+
+def test_summarize_supports_grouped_task_run_layout(tmp_path: Path) -> None:
+    results_dir = tmp_path / "results"
+    run_dir = results_dir / "food_containers" / "baseline_cnn_lr_3e-5"
+    run_dir.mkdir(parents=True)
+    (run_dir / "metrics.json").write_text(
+        json.dumps(BINARY_METRICS),
+        encoding="utf-8",
+    )
+    (run_dir / "config.yaml").write_text(
+        yaml.dump(BINARY_CONFIG),
+        encoding="utf-8",
+    )
+
+    rows = summarize_runs(results_dir)
+
+    assert len(rows) == 1
+    assert rows[0]["task_name"] == "food_containers"
+    assert rows[0]["run_name"] == "baseline_cnn_lr_3e-5"
+    assert rows[0]["task_type"] == "binary"

@@ -56,3 +56,57 @@ def load_cifar100(
         fine_labels=np.asarray(y_fine, dtype=np.int64).reshape(-1),
         coarse_labels=np.asarray(y_coarse, dtype=np.int64).reshape(-1),
     )
+
+
+View = Literal["image", "sequence"]
+
+
+def make_pipeline(
+    images: np.ndarray,
+    labels: np.ndarray,
+    *,
+    view: View,
+    batch_size: int = 32,
+    shuffle: bool = False,
+    cache: bool = False,
+    prefetch: bool = True,
+    shuffle_buffer: int = 1024,
+    seed: Optional[int] = None,
+) -> tf.data.Dataset:
+    """Build a ``tf.data.Dataset`` yielding (images, labels) in the chosen view.
+
+    Image view yields ``(B, 32, 32, 3)`` float32 in [0, 1]; sequence view
+    yields ``(B, 32, 96)`` float32 in [0, 1]. Shuffle is deterministic when
+    ``seed`` is given. Cache is in-memory and only useful for splits that
+    comfortably fit.
+    """
+    if view not in ("image", "sequence"):
+        raise ValueError(f"view must be 'image' or 'sequence'; got {view!r}")
+    if images.ndim != 4 or images.shape[1:] != (32, 32, 3):
+        raise ValueError(
+            f"images must have shape (N, 32, 32, 3); got {images.shape}"
+        )
+    if labels.ndim != 1 or labels.shape[0] != images.shape[0]:
+        raise ValueError(
+            f"labels must be 1-D with len == N; got {labels.shape}"
+        )
+
+    images_f32 = images.astype(np.float32, copy=False) / 255.0
+    if view == "sequence":
+        images_f32 = images_f32.reshape(images_f32.shape[0], 32, 96)
+
+    labels_i64 = labels.astype(np.int64, copy=False)
+
+    ds = tf.data.Dataset.from_tensor_slices((images_f32, labels_i64))
+    if cache:
+        ds = ds.cache()
+    if shuffle:
+        ds = ds.shuffle(
+            buffer_size=shuffle_buffer,
+            seed=seed,
+            reshuffle_each_iteration=False,
+        )
+    ds = ds.batch(batch_size, drop_remainder=False)
+    if prefetch:
+        ds = ds.prefetch(tf.data.AUTOTUNE)
+    return ds

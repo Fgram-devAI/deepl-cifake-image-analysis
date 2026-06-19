@@ -18,6 +18,7 @@ batch_size: 64
 shuffle_buffer: 4096
 dropout: 0.3
 epochs: 20
+optimizer: adam
 learning_rate: 1e-4
 
 early_stopping:

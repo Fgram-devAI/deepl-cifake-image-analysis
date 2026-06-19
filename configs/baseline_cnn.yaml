@@ -34,6 +34,7 @@ dropout: 0.3
 
 # Training
 epochs: 15
+optimizer: adam
 learning_rate: 0.001
 early_stopping:
   monitor: val_loss

@@ -24,9 +24,8 @@ from models.baseline import build_baseline_cnn
 from training.callbacks import get_callbacks
 from training.class_weights import compute_balanced_class_weights
 from training.losses import get_loss
+from training.optimizers import build_optimizer
 from training.splits import stratified_train_val_split
-
-Adam = tf.keras.optimizers.Adam
 
 
 def load_config(config_path) -> Dict[str, Any]:
@@ -202,7 +201,7 @@ def train_from_config(
 
     model = _build_model(config)
     model.compile(
-        optimizer=Adam(learning_rate=float(config.get("learning_rate", 1e-3))),
+        optimizer=build_optimizer(config),
         loss=get_loss("binary"),
         metrics=["accuracy"],
     )

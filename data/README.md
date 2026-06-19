@@ -1,44 +1,34 @@
 # Data Module
 
-## CIFAKE Dataset
+## CIFAR-100 Dataset
 
-CIFAKE is a dataset of 120k 32×32 images: real images from CIFAR-10 and synthetic images from Stable Diffusion v1.4.
+The main dataset is CIFAR-100: 32x32 RGB images with 100 fine-grained object classes grouped into
+20 coarse superclasses.
 
-### Download
+The project uses CIFAR-100 to build binary classification tasks, for example:
 
-1. Go to [Kaggle](https://www.kaggle.com/) and set up your API credentials (`~/.kaggle/kaggle.json`).
-2. Download CIFAKE using:
-   ```bash
-   kaggle datasets download -d birdy654/cifake-real-and-ai-generated-synthetic-images -p data/raw/
-   unzip data/raw/cifake-real-and-ai-generated-synthetic-images.zip -d data/raw/
-   ```
-3. Expected structure:
-   ```
-   data/raw/
-   └── cifake/
-       ├── REAL/      (CIFAR-10 real images)
-       └── FAKE/      (Stable Diffusion synthetic images)
-   ```
+- fine class vs. rest: `cow` vs. `not cow`;
+- fine class vs. rest: `apple` vs. `not apple`;
+- superclass vs. rest: `aquatic mammals` vs. all other classes.
 
-## Midjourney OOD Test Set
+## Loading
 
-The Midjourney v6 subset (~4k CIFAKE-inspired images) is used **for evaluation only**. Do **not** train, validate, or tune on this set.
+Prefer explicit loader functions that return `tf.data.Dataset` objects. The local code may load
+CIFAR-100 through `tf.keras.datasets.cifar100.load_data(label_mode="fine")` and
+`label_mode="coarse"` or an equivalent documented source.
 
-### Download
-
-```bash
-# TODO: Add download link/procedure for MJ v6 OOD set
-# Expected structure:
-# data/raw/midjourney_ood/
-#   └── images/  (4k 32×32 images)
-```
+No dataset download should happen at module import time.
 
 ## Preprocessing
 
-- Images are normalized to [0, 1].
-- Reshaped from (32, 32, 3) to (32, 96) for sequential models (row-as-timestep).
-- Image view (32, 32, 3) is preserved for the CNN transfer branch.
+- Images are normalized to floating-point tensors.
+- Sequential models use row-as-timestep conversion from `(32, 32, 3)` to `(32, 96)`.
+- Image models preserve `(32, 32, 3)` and may resize inside the model/pipeline for transfer
+  learning.
+- Binary task construction must record the positive label definition, negative label definition,
+  class counts, split, and seed.
 
-## Ablation Subset
+## Notebooks
 
-Sweeps run on a balanced ~15–25k-image subset (configurable). The full 120k set is reserved for final canonical runs.
+Colab notebooks should include their own CIFAR-100 loading and preprocessing logic. Do not import
+the local `data/` module from notebooks.

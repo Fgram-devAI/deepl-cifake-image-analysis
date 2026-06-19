@@ -1,28 +1,33 @@
-# Experiment matrix definition
+# Experiment Matrix
 
-ARCHITECTURES = ["rnn", "lstm", "bilstm", "vit", "transfer"]
+This matrix tracks the intended CIFAR-100 binary classification experiments for the local code and
+the standalone notebooks.
 
-ACTIVATIONS = ["tanh", "relu"]  # For RNN family; N/A for ViT and Transfer
+## Task Axis
 
-HEADS = ["binary", "multiclass"]
+| Task type | Examples | Notes |
+|---|---|---|
+| Fine class vs. rest | `cow` vs. not `cow`, `apple` vs. not `apple` | Report class balance carefully |
+| Superclass vs. rest | `aquatic mammals` vs. rest, `vehicles 1` vs. rest | Usually less imbalanced than one fine class |
 
-MASKING_VARIANTS = [False, True]  # off, on
+## Model Axis
 
-# Matrix summary :
-# 5 architectures × 2 activations (RNN family) × 2 heads × 2 masking
-# = ~20–30 core configurations (excluding ViT/Transfer which don't have activation axis)
+| Family | Models | Training mode |
+|---|---|---|
+| Sequential | RNN, LSTM, Bi-LSTM | From scratch, optional row masking |
+| Attention | Small ViT | From scratch |
+| Transfer learning | MobileNetV3, EfficientNet, ResNet | Frozen feature extraction, partial fine-tuning |
 
-MATRIX = """
-| Architecture | Hidden activation | Output head | Masking | Notes |
-|---|---|---|---|---|
-| Vanilla RNN | tanh / relu | binary / multiclass | off / on | Baseline sequential; prone to vanishing/exploding gradients |
-| LSTM | tanh / relu | binary / multiclass | off / on | Improved gradient flow vs RNN |
-| Bi-LSTM | tanh / relu | binary / multiclass | off / on | Bidirectional context |
-| ViT | N/A | binary / multiclass | N/A | From-scratch tiny transformer; no activation/masking axes |
-| MobileNetV3 (Transfer) | N/A | binary / multiclass | N/A | CNN upper benchmark; frozen backbone |
+## Ablation Axis
 
-**Final:** OOD eval on Midjourney v6 for best binary models.
-"""
+| Axis | Values |
+|---|---|
+| Data augmentation | off, on |
+| Transfer backbone state | frozen, partially unfrozen |
+| Sequence masking | off, on for sequential models |
+| Metrics | accuracy, precision, recall, F1, ROC-AUC, confusion matrix |
 
-if __name__ == "__main__":
-    print(MATRIX)
+## Run Policy
+
+Start with one fine-class task and one superclass task. Use smoke runs first, then promote only the
+most informative configurations to longer training runs.

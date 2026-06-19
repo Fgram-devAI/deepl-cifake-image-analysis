@@ -1,6 +1,39 @@
-# Image-as-Sequence: Sequential vs Attention Architectures for Vision
+# CIFAR-100 Deep Learning Benchmark
 
-A deep-learning evaluation framework benchmarking how fundamentally different neural architectures (RNNs, LSTMs, Transformers, and transfer learning) process computer-vision data when images are fed row-by-row as a time series.
+Deep-learning MSc project for NCSR Demokritos and the University of Piraeus. The project
+benchmarks sequential, attention-based, and transfer-learning architectures on CIFAR-100 using
+binary classification tasks derived from fine classes and superclasses.
+
+## Project Direction
+
+The main dataset is CIFAR-100. The project studies binary questions such as "cow vs. not cow" or
+superclass-level tasks such as "aquatic mammals vs. all other classes". The goal is to compare how
+different model families handle the same 32x32 visual data under controlled binary classification
+settings.
+
+The project has two parallel deliverables:
+
+- **Local source-code implementation:** reusable Python modules for data loading, preprocessing,
+  model building, training, evaluation, and ablation runs.
+- **Standalone Colab notebooks:** notebook workflows that run independently in Colab and do not
+  import source-code modules from this repository. They should be reproducible, instructional, and
+  aligned with the same CIFAR-100 tasks.
+
+## Roadmap
+
+1. Define the CIFAR-100 binary task plan: one or more fine-class targets and one or more superclass
+   targets.
+2. Implement local data loading and preprocessing, including image view `(32, 32, 3)` and
+   row-as-timestep sequence view `(32, 96)`.
+3. Build baseline sequential models: RNN, LSTM, and Bi-LSTM.
+4. Build attention and transfer-learning models: small ViT, MobileNetV3, EfficientNet, and ResNet.
+5. Add training guardrails: config-driven runs, deterministic seeds, callbacks, metrics, and saved
+   result artifacts.
+6. Run ablations for data augmentation, frozen-backbone transfer learning, partial fine-tuning,
+   and full fine-tuning where appropriate.
+7. Create standalone Colab notebooks that mirror the main experiment stages without importing the
+   local package code.
+8. Compare local-code and notebook results in a final evaluation summary.
 
 ## Quick Start
 
@@ -42,56 +75,58 @@ Quick TensorFlow check:
 python -c "import tensorflow as tf; print(tf.__version__); print(tf.config.list_physical_devices())"
 ```
 
-### Commands
+## Local Code Commands
 
 ```bash
 # Single training run with a given config
 python -m training.train --config configs/lstm.yaml
 
-# Full ablation sweep on the subsampled training set
+# Full ablation sweep on the configured subset/task
 python -m experiments.run_ablations
 
-# OOD evaluation on trained binary model
+# Evaluation of a trained model
 python -m evaluation.ood_eval --weights results/<run>/weights.h5
 ```
 
-## Git Setup
+## Notebook Workflow
 
-This scaffold is ready to initialize as a new repository. Keep generated data, virtual
-environments, and run outputs out of git; `.gitignore` already covers `data/raw/`, `results/*`
-except `results/.gitkeep`, caches, notebooks, and local env files.
+Notebooks live under `notebooks/` and are intended for Colab. They should be self-contained:
+dataset loading, preprocessing, model definitions, training loops, and plots should exist inside
+the notebook rather than importing from `data/`, `models/`, or `training/`.
 
-```bash
-git init
-git add README.md CLAUDE.md CODEX_INIT_PROMPT.md requirements.txt requirements-macos.txt .gitignore
-git add configs data models training evaluation experiments results/.gitkeep
-git commit -m "Initial project scaffold"
-```
+Suggested notebook sequence:
 
-Then create an empty remote repository on your Git host and connect it:
-
-```bash
-git remote add origin <repo-url>
-git branch -M main
-git push -u origin main
-```
+- `01_cifar100_data_exploration.ipynb`
+- `02_binary_baseline_cnn.ipynb`
+- `03_data_augmentation.ipynb`
+- `04_transfer_learning_feature_extraction.ipynb`
+- `05_fine_tuning_efficientnet_resnet.ipynb`
+- `06_sequence_models.ipynb`
+- `07_attention_vit_comparison.ipynb`
 
 ## Project Structure
 
-- **`data/`** — dataset loaders, preprocessing (row-as-timestep conversion), and masking.
-- **`models/`** — sequential (RNN/LSTM/BiLSTM), from-scratch ViT, and transfer-learning (MobileNetV3) architectures.
-- **`training/`** — config-driven training loop, loss functions, and callbacks.
-- **`evaluation/`** — metrics computation and OOD evaluation.
-- **`experiments/`** — ablation sweep matrix and runner.
-- **`configs/`** — YAML configurations for each model variant.
-- **`results/`** — output directory for run artifacts (weights, metrics, config snapshots).
+- **`data/`** - CIFAR-100 loaders, binary task construction, preprocessing, row-as-timestep
+  conversion, and masking.
+- **`models/`** - sequential models, small ViT, MobileNetV3, EfficientNet, and ResNet model
+  builders for the local implementation.
+- **`training/`** - config-driven training loop, loss functions, callbacks, and result logging.
+- **`evaluation/`** - metrics computation and evaluation utilities.
+- **`experiments/`** - ablation sweep matrix and runners.
+- **`notebooks/`** - standalone Colab notebooks that do not depend on local source modules.
+- **`configs/`** - YAML configurations for local-code runs.
+- **`results/`** - output directory for run artifacts.
 
 ## Design Constraints
 
-- **T = 32:** Images are 32×32, processed one row per timestep → sequence shape (T=32, features=96).
-- **Hardware:** Single Colab T4 (16 GB) — no OOM, use `tf.data` streaming.
-- **Data:** CIFAKE (120k, real vs. fake) + OOD eval on Midjourney v6 subset.
-- **Dual task:** Binary (real-vs-fake, sigmoid+BCE) and 10-class (CIFAR-10 objects, softmax+CE).
-- **Masking:** Keras `Masking` layer simulates missing rows; observe temporal robustness.
+- **Dataset:** CIFAR-100, using fine labels and coarse superclasses to define binary tasks.
+- **Primary task style:** binary classification such as target class vs. rest or superclass vs.
+  rest.
+- **Input views:** sequential models consume row-wise sequences of shape `(32, 96)`; image models
+  consume standard image tensors of shape `(32, 32, 3)`.
+- **Hardware:** single Colab T4 target for notebooks and lightweight local runs.
+- **Guardrails:** deterministic seeds, small batches, `tf.data` pipelines, and clear separation
+  between training and evaluation.
+- **Notebooks:** runnable independently in Colab without importing local project modules.
 
 For locked design decisions and constraints, see `CLAUDE.md`.

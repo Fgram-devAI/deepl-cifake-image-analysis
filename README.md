@@ -128,5 +128,3 @@ Suggested notebook sequence:
 - **Guardrails:** deterministic seeds, small batches, `tf.data` pipelines, and clear separation
   between training and evaluation.
 - **Notebooks:** runnable independently in Colab without importing local project modules.
-
-For locked design decisions and constraints, see `CLAUDE.md`.

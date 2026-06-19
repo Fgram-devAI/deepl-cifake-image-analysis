@@ -39,6 +39,9 @@ env/
 data/raw/
 results/*
 !results/.gitkeep
+/superpowers/
+CLAUDE.md
+.claude/
 
 # Jupyter
 .ipynb_checkpoints/

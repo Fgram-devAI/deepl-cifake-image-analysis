@@ -10,7 +10,7 @@ from typing import Sequence
 import numpy as np
 
 from data.labels import LabelLevel, get_label_ids
-from data.loaders import Cifar100Split
+from data.loaders import Cifar100Split, Split
 
 
 @dataclass(frozen=True)
@@ -48,12 +48,14 @@ def make_cifar100_binary_task(
     *,
     label_level: LabelLevel,
     positive_label_names: Sequence[str],
+    split: Split | str | None = None,
     seed: int = 42,
 ) -> BinaryTask:
     """Build a binary task from a loaded CIFAR-100 split.
 
     The metadata block records the positive definition, negative definition,
-    class counts, and seed so downstream code can log a reproducible task spec.
+    split, class counts, and seed so downstream code can log a reproducible
+    task spec.
     """
     if label_level == "fine":
         source_labels = split_data.fine_labels
@@ -73,6 +75,7 @@ def make_cifar100_binary_task(
         "positive_label_names": list(positive_label_names),
         "positive_ids": positive_ids,
         "negative_definition": "all other classes",
+        "split": split or split_data.split or "unknown",
         "n_total": int(binary.shape[0]),
         "class_counts": counts,
         "seed": seed,

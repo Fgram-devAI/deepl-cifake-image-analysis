@@ -17,6 +17,8 @@ Prefer explicit loader functions that return `tf.data.Dataset` objects. The loca
 CIFAR-100 from the Hugging Face `uoft-cs/cifar100` dataset by default, with
 `tf.keras.datasets.cifar100` available as a fallback source.
 
+Install `requirements-hf.txt` before using the default Hugging Face backend.
+
 No dataset download should happen at module import time.
 
 ## Preprocessing
@@ -26,7 +28,7 @@ No dataset download should happen at module import time.
 - Image models preserve `(32, 32, 3)` and may resize inside the model/pipeline for transfer
   learning.
 - Binary task construction must record the positive label definition, negative label definition,
-  class counts, split, and seed.
+  split, class counts, and seed.
 
 ## Notebooks
 

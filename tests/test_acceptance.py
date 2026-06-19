@@ -42,6 +42,7 @@ def test_acceptance_fine_class_image_view(synthetic_cifar100):
     )
     assert isinstance(task, BinaryTask)
     assert set(np.unique(task.binary_labels).tolist()).issubset({0, 1})
+    assert task.metadata["split"] == "train"
     assert task.class_counts.keys() == {0, 1}
     assert task.class_counts[0] + task.class_counts[1] == task.binary_labels.shape[0]
 
@@ -63,6 +64,7 @@ def test_acceptance_coarse_superclass_sequence_view(synthetic_cifar100):
         positive_label_names=["aquatic_mammals"],
     )
     assert set(np.unique(task.binary_labels).tolist()).issubset({0, 1})
+    assert task.metadata["split"] == "train"
     assert task.class_counts[0] + task.class_counts[1] == task.binary_labels.shape[0]
 
     ds = make_pipeline(

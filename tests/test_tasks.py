@@ -37,6 +37,7 @@ def _synthetic_split(n: int = 20) -> Cifar100Split:
         images=rng.integers(0, 256, size=(n, 32, 32, 3), dtype=np.uint8),
         fine_labels=np.arange(n, dtype=np.int64) % 100,
         coarse_labels=np.arange(n, dtype=np.int64) % 20,
+        split="train",
     )
 
 
@@ -51,6 +52,7 @@ def test_make_cifar100_binary_task_fine_cow_vs_rest():
     assert set(np.unique(task.binary_labels).tolist()).issubset({0, 1})
     assert task.metadata["label_level"] == "fine"
     assert task.metadata["positive_label_names"] == ["cow"]
+    assert task.metadata["split"] == "train"
     assert task.class_counts[1] > 0
     assert task.class_counts[0] + task.class_counts[1] == 200
 
@@ -63,6 +65,7 @@ def test_make_cifar100_binary_task_coarse_aquatic_vs_rest():
         positive_label_names=["aquatic_mammals"],
     )
     assert task.metadata["label_level"] == "coarse"
+    assert task.metadata["split"] == "train"
     assert task.class_counts[1] > 0
     assert task.class_counts[0] + task.class_counts[1] == 100
 

@@ -19,11 +19,13 @@ class Cifar100Split:
     images: (N, 32, 32, 3) uint8
     fine_labels: (N,) int64 in [0, 100)
     coarse_labels: (N,) int64 in [0, 20)
+    split: train/test split name, if known
     """
 
     images: np.ndarray
     fine_labels: np.ndarray
     coarse_labels: np.ndarray
+    split: Optional[Split] = None
 
 
 def load_cifar100(
@@ -63,6 +65,9 @@ def _load_cifar100_keras(
 ) -> Cifar100Split:
     """Load CIFAR-100 from the TensorFlow/Keras built-in dataset backend."""
     loader = _loader if _loader is not None else tf.keras.datasets.cifar100.load_data
+    # Keras exposes fine and coarse labels through separate label modes, so the
+    # fallback backend must call the loader twice. The archive cache avoids a
+    # second download, but the arrays are decoded twice.
     (x_train_f, y_train_f), (x_test_f, y_test_f) = loader(label_mode="fine")
     (_, y_train_c), (_, y_test_c) = loader(label_mode="coarse")
 
@@ -75,6 +80,7 @@ def _load_cifar100_keras(
         images=np.asarray(images, dtype=np.uint8),
         fine_labels=np.asarray(y_fine, dtype=np.int64).reshape(-1),
         coarse_labels=np.asarray(y_coarse, dtype=np.int64).reshape(-1),
+        split=split,
     )
 
 
@@ -90,7 +96,7 @@ def _load_cifar100_huggingface(
         except ImportError as exc:
             raise ImportError(
                 "Hugging Face loading requires the `datasets` package. "
-                "Install it with `pip install -r requirements.txt`."
+                "Install it with `pip install -r requirements-hf.txt`."
             ) from exc
 
         rows = load_dataset("uoft-cs/cifar100", split=split)
@@ -109,6 +115,7 @@ def _load_cifar100_huggingface(
         images=np.asarray(images, dtype=np.uint8),
         fine_labels=np.asarray(fine_labels, dtype=np.int64).reshape(-1),
         coarse_labels=np.asarray(coarse_labels, dtype=np.int64).reshape(-1),
+        split=split,
     )
 
 

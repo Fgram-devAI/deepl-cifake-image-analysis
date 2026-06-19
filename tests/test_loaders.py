@@ -49,6 +49,7 @@ def test_load_cifar100_huggingface_train_split_shapes(synthetic_cifar100):
     assert out.images.dtype == np.uint8
     assert out.fine_labels.shape == (200,)
     assert out.coarse_labels.shape == (200,)
+    assert out.split == "train"
 
 
 def test_load_cifar100_train_split_shapes(synthetic_cifar100):
@@ -60,6 +61,7 @@ def test_load_cifar100_train_split_shapes(synthetic_cifar100):
     assert out.images.dtype == np.uint8
     assert out.fine_labels.shape == (200,)
     assert out.coarse_labels.shape == (200,)
+    assert out.split == "train"
     assert "fine" in seen and "coarse" in seen
 
 
@@ -69,6 +71,7 @@ def test_load_cifar100_test_split_shapes(synthetic_cifar100):
     assert out.images.shape == (50, 32, 32, 3)
     assert out.fine_labels.shape == (50,)
     assert out.coarse_labels.shape == (50,)
+    assert out.split == "test"
 
 
 def test_load_cifar100_rejects_unknown_split(synthetic_cifar100):

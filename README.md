@@ -60,6 +60,12 @@ For the core project environment:
 pip install -r requirements.txt
 ```
 
+For Hugging Face dataset fetching:
+
+```bash
+pip install -r requirements-hf.txt
+```
+
 For Apple Silicon Macs, use the macOS overlay to include TensorFlow Metal acceleration:
 
 ```bash

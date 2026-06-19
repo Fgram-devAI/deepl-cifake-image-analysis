@@ -52,3 +52,66 @@ def test_get_callbacks_includes_early_stopping_csv_and_json(tmp_path: Path):
     assert es.patience == 3
     assert es.monitor == "val_loss"
     assert es.restore_best_weights is True
+
+
+# --- splits ---------------------------------------------------------------
+
+from training.class_weights import compute_balanced_class_weights  # noqa: E402
+from training.splits import stratified_train_val_split  # noqa: E402
+
+
+def _toy_dataset(n_pos: int = 30, n_neg: int = 70):
+    rng = np.random.default_rng(0)
+    images = rng.integers(
+        0, 256, size=(n_pos + n_neg, 32, 32, 3), dtype=np.uint8
+    )
+    labels = np.concatenate(
+        [np.ones(n_pos, dtype=np.int64), np.zeros(n_neg, dtype=np.int64)]
+    )
+    return images, labels
+
+
+def test_stratified_split_preserves_class_ratio():
+    images, labels = _toy_dataset(n_pos=30, n_neg=70)
+    x_tr, y_tr, x_val, y_val = stratified_train_val_split(
+        images, labels, val_fraction=0.2, seed=42
+    )
+    assert x_tr.shape[0] + x_val.shape[0] == 100
+    assert x_val.shape[0] == 20
+    assert int(y_val.sum()) == 6   # 30% of 20 is 6 positives
+    assert int(y_tr.sum()) == 24
+
+
+def test_stratified_split_is_deterministic():
+    images, labels = _toy_dataset()
+    a = stratified_train_val_split(images, labels, val_fraction=0.2, seed=7)
+    b = stratified_train_val_split(images, labels, val_fraction=0.2, seed=7)
+    np.testing.assert_array_equal(a[1], b[1])
+    np.testing.assert_array_equal(a[3], b[3])
+
+
+def test_stratified_split_rejects_invalid_fraction():
+    images, labels = _toy_dataset()
+    with pytest.raises(ValueError):
+        stratified_train_val_split(images, labels, val_fraction=0.0, seed=0)
+    with pytest.raises(ValueError):
+        stratified_train_val_split(images, labels, val_fraction=1.0, seed=0)
+
+
+# --- class weights --------------------------------------------------------
+
+def test_compute_balanced_class_weights_inverse_to_frequency():
+    labels = np.array([0] * 90 + [1] * 10, dtype=np.int64)
+    weights = compute_balanced_class_weights(labels)
+    assert set(weights.keys()) == {0, 1}
+    # Positive class is rarer, so its weight should be larger.
+    assert weights[1] > weights[0]
+    # sklearn 'balanced' formula: n_samples / (n_classes * count)
+    assert weights[0] == pytest.approx(100 / (2 * 90))
+    assert weights[1] == pytest.approx(100 / (2 * 10))
+
+
+def test_compute_balanced_class_weights_single_class_returns_unit_weights():
+    labels = np.zeros(50, dtype=np.int64)
+    weights = compute_balanced_class_weights(labels)
+    assert weights == {0: 1.0, 1: 1.0}

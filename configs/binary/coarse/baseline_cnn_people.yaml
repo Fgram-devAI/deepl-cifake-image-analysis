@@ -1,5 +1,5 @@
 architecture: baseline_cnn
-run_name: baseline_cnn_lr_1e-4
+run_name: baseline_cnn_people_lr_3e-5_40_ep
 seed: 42
 
 task:
@@ -18,14 +18,15 @@ class_imbalance:
 batch_size: 64
 shuffle_buffer: 4096
 dropout: 0.3
-epochs: 20
+epochs: 40
 optimizer: adam
-learning_rate: 1e-4
+learning_rate: 3e-5
+
 
 early_stopping:
   monitor: val_loss
   patience: 5
 
-output_dir: results/people
+output_dir: results/binary/coarse/people
 save_weights: true
 subset_size: null

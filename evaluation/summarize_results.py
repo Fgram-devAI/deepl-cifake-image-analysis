@@ -13,6 +13,8 @@ Both flat and grouped result layouts are supported:
 
 - ``results/<run_name>/metrics.json``
 - ``results/<task_name>/<run_name>/metrics.json``
+- ``results/binary/<label_level>/<task_name>/<run_name>/metrics.json``
+- ``results/multiclass/<label_level>/<run_name>/metrics.json``
 """
 
 from __future__ import annotations
@@ -89,6 +91,10 @@ def _iter_run_dirs(results_dir: Path) -> list[Path]:
 def _task_name_for_run(results_dir: Path, run_dir: Path) -> str:
     """Return the grouped task folder name for *run_dir*, or empty if flat."""
     relative = run_dir.relative_to(results_dir)
+    if len(relative.parts) >= 4 and relative.parts[0] == "binary":
+        return relative.parts[2]
+    if len(relative.parts) >= 3 and relative.parts[0] == "multiclass":
+        return f"{relative.parts[1]}_multiclass"
     if len(relative.parts) >= 2:
         return relative.parts[0]
     return ""

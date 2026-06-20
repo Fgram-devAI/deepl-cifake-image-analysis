@@ -244,3 +244,43 @@ def test_summarize_supports_grouped_task_run_layout(tmp_path: Path) -> None:
     assert rows[0]["task_name"] == "food_containers"
     assert rows[0]["run_name"] == "baseline_cnn_lr_3e-5"
     assert rows[0]["task_type"] == "binary"
+
+
+def test_summarize_supports_nested_binary_layout(tmp_path: Path) -> None:
+    results_dir = tmp_path / "results"
+    run_dir = results_dir / "binary" / "coarse" / "flowers" / "run_a"
+    run_dir.mkdir(parents=True)
+    (run_dir / "metrics.json").write_text(
+        json.dumps(BINARY_METRICS),
+        encoding="utf-8",
+    )
+    (run_dir / "config.yaml").write_text(
+        yaml.dump(BINARY_CONFIG),
+        encoding="utf-8",
+    )
+
+    rows = summarize_runs(results_dir)
+
+    assert len(rows) == 1
+    assert rows[0]["task_name"] == "flowers"
+    assert rows[0]["run_name"] == "run_a"
+
+
+def test_summarize_supports_nested_multiclass_layout(tmp_path: Path) -> None:
+    results_dir = tmp_path / "results"
+    run_dir = results_dir / "multiclass" / "coarse" / "run_mc"
+    run_dir.mkdir(parents=True)
+    (run_dir / "metrics.json").write_text(
+        json.dumps(MULTICLASS_METRICS),
+        encoding="utf-8",
+    )
+    (run_dir / "config.yaml").write_text(
+        yaml.dump(MULTICLASS_CONFIG),
+        encoding="utf-8",
+    )
+
+    rows = summarize_runs(results_dir)
+
+    assert len(rows) == 1
+    assert rows[0]["task_name"] == "coarse_multiclass"
+    assert rows[0]["run_name"] == "run_mc"

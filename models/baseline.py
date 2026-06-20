@@ -2,6 +2,8 @@
 
 import tensorflow as tf
 
+from models.augmentation import build_augmentation
+
 keras = tf.keras
 layers = tf.keras.layers
 
@@ -10,6 +12,7 @@ def build_baseline_cnn(
     input_shape: tuple[int, int, int] = (32, 32, 3),
     dropout: float = 0.3,
     num_classes: int = 1,
+    augmentation: dict | None = None,
 ) -> keras.Model:
     """Build a compact 2-block CNN for image classification.
 
@@ -24,6 +27,10 @@ def build_baseline_cnn(
         input_shape: Spatial dimensions of the input image (H, W, C).
         dropout: Dropout rate applied after each conv block and the dense layer.
         num_classes: Number of output classes. Must be >= 1.
+        augmentation: Optional augmentation config dict (from YAML
+            ``augmentation:`` block). ``None`` or ``enabled: false`` disables
+            augmentation entirely. Keras Random* layers are no-ops at
+            inference time.
 
     Raises:
         ValueError: If ``num_classes`` is less than 1.
@@ -33,7 +40,10 @@ def build_baseline_cnn(
 
     inputs = keras.Input(shape=input_shape, name="image")
 
-    x = layers.Conv2D(32, 3, padding="same", activation="relu")(inputs)
+    aug_layer = build_augmentation(augmentation)
+    x = aug_layer(inputs) if aug_layer is not None else inputs
+
+    x = layers.Conv2D(32, 3, padding="same", activation="relu")(x)
     x = layers.Conv2D(32, 3, padding="same", activation="relu")(x)
     x = layers.MaxPool2D(pool_size=2)(x)
     x = layers.Dropout(dropout)(x)

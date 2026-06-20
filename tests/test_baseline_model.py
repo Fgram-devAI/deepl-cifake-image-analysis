@@ -70,3 +70,35 @@ def test_baseline_cnn_rejects_num_classes_below_one():
         build_baseline_cnn(num_classes=0)
     with pytest.raises(ValueError):
         build_baseline_cnn(num_classes=-3)
+
+
+def test_baseline_cnn_no_augmentation_layer_by_default():
+    model = build_baseline_cnn()
+    layer_names = [l.name for l in model.layers]
+    assert "augmentation" not in layer_names
+
+
+def test_baseline_cnn_with_augmentation_includes_augmentation_layer():
+    aug_cfg = {
+        "enabled": True,
+        "horizontal_flip": True,
+        "translation": 0.05,
+        "zoom": 0.05,
+        "rotation": 0.0,
+        "contrast": 0.0,
+    }
+    model = build_baseline_cnn(augmentation=aug_cfg)
+    layer_names = [l.name for l in model.layers]
+    assert "augmentation" in layer_names
+
+
+def test_baseline_cnn_augmentation_preserves_binary_output_shape():
+    aug_cfg = {"enabled": True, "horizontal_flip": True, "translation": 0.05}
+    model = build_baseline_cnn(augmentation=aug_cfg)
+    assert model.output_shape == (None, 1)
+
+
+def test_baseline_cnn_augmentation_preserves_multiclass_output_shape():
+    aug_cfg = {"enabled": True, "horizontal_flip": True, "translation": 0.05}
+    model = build_baseline_cnn(num_classes=20, augmentation=aug_cfg)
+    assert model.output_shape == (None, 20)

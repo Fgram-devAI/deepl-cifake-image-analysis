@@ -195,6 +195,28 @@ def _make_image_pipelines(
     return train_ds, val_ds, test_ds
 
 
+def _maybe_load_initial_weights(
+    model: tf.keras.Model, config: Dict[str, Any]
+) -> None:
+    """Load weights from ``config['initial_weights']`` if the key is set.
+
+    Used to chain a fine-tune run on top of a previous (e.g. frozen)
+    run by reusing its saved ``weights.h5``.
+
+    Raises:
+        FileNotFoundError: If the path is set but does not exist.
+    """
+    path = config.get("initial_weights")
+    if path is None:
+        return
+    weights_path = Path(path)
+    if not weights_path.exists():
+        raise FileNotFoundError(
+            f"initial_weights path does not exist: {weights_path}"
+        )
+    model.load_weights(str(weights_path))
+
+
 def _run_binary(
     config: Dict[str, Any],
     train_split: Cifar100Split,
@@ -260,6 +282,7 @@ def _run_binary(
         loss=get_loss("binary"),
         metrics=["accuracy"],
     )
+    _maybe_load_initial_weights(model, config)
 
     es_cfg = config.get("early_stopping", {})
     callbacks = get_callbacks(
@@ -373,6 +396,7 @@ def _run_multiclass(
         loss=get_loss("multiclass"),
         metrics=["accuracy"],
     )
+    _maybe_load_initial_weights(model, config)
 
     es_cfg = config.get("early_stopping", {})
     callbacks = get_callbacks(

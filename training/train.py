@@ -3,8 +3,9 @@
 import argparse
 import json
 import os
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Iterator, Optional, Tuple
 
 os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "1")
 
@@ -195,6 +196,40 @@ def _make_image_pipelines(
     return train_ds, val_ds, test_ds
 
 
+def _iter_all_layers(model: tf.keras.Model):
+    """Yield ``model`` and every nested sublayer (including those inside
+    nested Functional sub-models)."""
+    yield model
+    for layer in getattr(model, "layers", []):
+        yield from _iter_all_layers(layer)
+
+
+@contextmanager
+def _frozen_trainability(model: tf.keras.Model) -> Iterator[None]:
+    """Context manager: stash per-layer ``trainable``, force everything frozen,
+    restore on exit.
+
+    Keras's legacy ``.h5`` weight format pairs file values to model variables
+    by index using ``layer.trainable_weights + layer.non_trainable_weights``
+    order. With a nested Functional backbone, toggling ``backbone.trainable``
+    between save and load reshuffles that list (e.g. BatchNorm ``gamma``/
+    ``beta`` move out of the non-trainable bucket, ``moving_mean``/
+    ``moving_variance`` stay in it), so position ``i`` in the file no longer
+    targets the same variable. Forcing every layer frozen during the fallback
+    load collapses everything into the same layer-by-layer ordering and makes
+    the frozen -> fine-tune chain safe without changing how new weight files
+    are saved.
+    """
+    states = [(layer, layer.trainable) for layer in _iter_all_layers(model)]
+    try:
+        for layer, _ in states:
+            layer.trainable = False
+        yield
+    finally:
+        for layer, original in states:
+            layer.trainable = original
+
+
 def _maybe_load_initial_weights(
     model: tf.keras.Model, config: Dict[str, Any]
 ) -> None:
@@ -214,7 +249,13 @@ def _maybe_load_initial_weights(
         raise FileNotFoundError(
             f"initial_weights path does not exist: {weights_path}"
         )
-    model.load_weights(str(weights_path))
+    try:
+        model.load_weights(str(weights_path))
+    except ValueError as exc:
+        if "axes don't match array" not in str(exc):
+            raise
+        with _frozen_trainability(model):
+            model.load_weights(str(weights_path))
 
 
 def _run_binary(

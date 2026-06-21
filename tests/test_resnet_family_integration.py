@@ -108,6 +108,43 @@ def test_resnet_family_reload_path_reproduces_predictions(tmp_path: Path):
     np.testing.assert_allclose(y_a, y_b, rtol=1e-6, atol=1e-6)
 
 
+def test_resnet_family_frozen_to_finetune_chain_loads_weights(tmp_path: Path):
+    """Frozen -> fine-tune weight chain must round-trip.
+
+    Regression for a Keras-2 ``.h5`` ordering bug: flipping
+    ``backbone.trainable`` between save and load reshuffles
+    ``trainable_weights + non_trainable_weights`` (BN ``gamma``/``beta`` move
+    out of the non-trainable bucket while ``moving_mean``/``moving_variance``
+    stay), so position ``i`` in the file targeted a different variable in the
+    loading model. The user-facing symptom was
+    ``ValueError: axes don't match array`` during ``train_from_config`` of the
+    fine-tune config.
+    """
+    config_frozen = _binary_resnet_config(tmp_path)
+    train_from_config(
+        config_frozen,
+        train_split=_tiny_split(seed=1),
+        test_split=_tiny_split(seed=2),
+    )
+    weights_path = tmp_path / "out" / "smoke_resnet50v2_frozen" / "weights.h5"
+    assert weights_path.exists()
+
+    config_finetune = _binary_resnet_config(tmp_path)
+    config_finetune["run_name"] = "smoke_resnet50v2_finetune"
+    config_finetune["trainable_backbone"] = True
+    config_finetune["fine_tune_at"] = 150
+    config_finetune["initial_weights"] = str(weights_path)
+    config_finetune["learning_rate"] = 1e-5
+
+    history, metrics = train_from_config(
+        config_finetune,
+        train_split=_tiny_split(seed=1),
+        test_split=_tiny_split(seed=2),
+    )
+    assert "loss" in history
+    assert "accuracy" in metrics
+
+
 def test_resnet_family_multiclass_end_to_end_offline(tmp_path: Path):
     config = {
         "architecture": "resnet_family",

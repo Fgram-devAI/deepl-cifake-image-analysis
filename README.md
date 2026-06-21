@@ -120,13 +120,13 @@ the notebook rather than importing from `data/`, `models/`, or `training/`.
 
 Suggested notebook sequence:
 
-- `01_cifar100_data_exploration.ipynb`
-- `02_binary_baseline_cnn.ipynb`
-- `03_data_augmentation.ipynb`
-- `04_transfer_learning_feature_extraction.ipynb`
-- `05_fine_tuning_efficientnet_resnet.ipynb`
-- `06_sequence_models.ipynb`
-- `07_attention_vit_comparison.ipynb`
+- [01 CIFAR-100 data exploration](notebooks/01_cifar100_data_exploration.ipynb)
+- [02 Baseline CNN training](notebooks/02_baseline_cnn_training.ipynb)
+  [![Open 02 in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Fgram-devAI/deepl-cifar100-image-analysis/blob/main/notebooks/02_baseline_cnn_training.ipynb)
+- [03 ResNet-family transfer learning](notebooks/03_resnet_family_transfer_learning.ipynb)
+  [![Open 03 in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Fgram-devAI/deepl-cifar100-image-analysis/blob/main/notebooks/03_resnet_family_transfer_learning.ipynb)
+- Future notebooks: data augmentation, EfficientNet/MobileNet transfer learning, sequence models,
+  and attention/ViT comparison.
 
 ## Project Structure
 

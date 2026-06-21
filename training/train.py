@@ -3,8 +3,9 @@
 import argparse
 import json
 import os
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Iterator, Optional, Tuple
 
 os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "1")
 
@@ -26,6 +27,7 @@ from evaluation.metrics import (
     find_best_threshold,
 )
 from models.baseline import build_baseline_cnn
+from models.resnet_family import build_resnet_family_model
 from training.callbacks import get_callbacks
 from training.class_weights import compute_balanced_class_weights
 from training.losses import get_loss
@@ -41,15 +43,30 @@ def load_config(config_path) -> Dict[str, Any]:
 
 def _build_model(config: Dict[str, Any], *, num_classes: int = 1) -> tf.keras.Model:
     architecture = config.get("architecture", "baseline_cnn")
-    if architecture != "baseline_cnn":
-        raise ValueError(
-            f"This branch only ships the 'baseline_cnn' architecture; "
-            f"got {architecture!r}"
+    if architecture == "baseline_cnn":
+        return build_baseline_cnn(
+            dropout=float(config.get("dropout", 0.3)),
+            num_classes=num_classes,
+            augmentation=config.get("augmentation"),
         )
-    return build_baseline_cnn(
-        dropout=float(config.get("dropout", 0.3)),
-        num_classes=num_classes,
-        augmentation=config.get("augmentation"),
+    if architecture == "resnet_family":
+        if "backbone_name" not in config:
+            raise KeyError(
+                "resnet_family architecture requires a 'backbone_name' key "
+                "in the config (e.g. 'resnet50v2')."
+            )
+        return build_resnet_family_model(
+            backbone_name=str(config["backbone_name"]),
+            num_classes=num_classes,
+            resize_to=int(config.get("resize_to", 224)),
+            dropout=float(config.get("dropout", 0.2)),
+            trainable_backbone=bool(config.get("trainable_backbone", False)),
+            fine_tune_at=config.get("fine_tune_at"),
+            weights=config.get("weights", "imagenet"),
+        )
+    raise ValueError(
+        f"Unsupported architecture {architecture!r}. "
+        "Supported: 'baseline_cnn', 'resnet_family'."
     )
 
 
@@ -179,6 +196,68 @@ def _make_image_pipelines(
     return train_ds, val_ds, test_ds
 
 
+def _iter_all_layers(model: tf.keras.Model):
+    """Yield ``model`` and every nested sublayer (including those inside
+    nested Functional sub-models)."""
+    yield model
+    for layer in getattr(model, "layers", []):
+        yield from _iter_all_layers(layer)
+
+
+@contextmanager
+def _frozen_trainability(model: tf.keras.Model) -> Iterator[None]:
+    """Context manager: stash per-layer ``trainable``, force everything frozen,
+    restore on exit.
+
+    Keras's legacy ``.h5`` weight format pairs file values to model variables
+    by index using ``layer.trainable_weights + layer.non_trainable_weights``
+    order. With a nested Functional backbone, toggling ``backbone.trainable``
+    between save and load reshuffles that list (e.g. BatchNorm ``gamma``/
+    ``beta`` move out of the non-trainable bucket, ``moving_mean``/
+    ``moving_variance`` stay in it), so position ``i`` in the file no longer
+    targets the same variable. Forcing every layer frozen during the fallback
+    load collapses everything into the same layer-by-layer ordering and makes
+    the frozen -> fine-tune chain safe without changing how new weight files
+    are saved.
+    """
+    states = [(layer, layer.trainable) for layer in _iter_all_layers(model)]
+    try:
+        for layer, _ in states:
+            layer.trainable = False
+        yield
+    finally:
+        for layer, original in states:
+            layer.trainable = original
+
+
+def _maybe_load_initial_weights(
+    model: tf.keras.Model, config: Dict[str, Any]
+) -> None:
+    """Load weights from ``config['initial_weights']`` if the key is set.
+
+    Used to chain a fine-tune run on top of a previous (e.g. frozen)
+    run by reusing its saved ``weights.h5``.
+
+    Raises:
+        FileNotFoundError: If the path is set but does not exist.
+    """
+    path = config.get("initial_weights")
+    if path is None:
+        return
+    weights_path = Path(path)
+    if not weights_path.exists():
+        raise FileNotFoundError(
+            f"initial_weights path does not exist: {weights_path}"
+        )
+    try:
+        model.load_weights(str(weights_path))
+    except ValueError as exc:
+        if "axes don't match array" not in str(exc):
+            raise
+        with _frozen_trainability(model):
+            model.load_weights(str(weights_path))
+
+
 def _run_binary(
     config: Dict[str, Any],
     train_split: Cifar100Split,
@@ -244,6 +323,7 @@ def _run_binary(
         loss=get_loss("binary"),
         metrics=["accuracy"],
     )
+    _maybe_load_initial_weights(model, config)
 
     es_cfg = config.get("early_stopping", {})
     callbacks = get_callbacks(
@@ -357,6 +437,7 @@ def _run_multiclass(
         loss=get_loss("multiclass"),
         metrics=["accuracy"],
     )
+    _maybe_load_initial_weights(model, config)
 
     es_cfg = config.get("early_stopping", {})
     callbacks = get_callbacks(

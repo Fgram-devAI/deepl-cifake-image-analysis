@@ -141,8 +141,9 @@ Suggested notebook sequence:
   [![Open 07 in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Fgram-devAI/deepl-cifar100-image-analysis/blob/main/notebooks/07_mobilenetv3_fine_frozen_unfrozen.ipynb)
 - [08 EfficientNetB3 fine transfer learning](notebooks/08_efficientnet_b3_fine_transfer_learning.ipynb)
   [![Open 08 in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Fgram-devAI/deepl-cifar100-image-analysis/blob/main/notebooks/08_efficientnet_b3_fine_transfer_learning.ipynb)
-- Future notebooks: data augmentation, sequence models, and
-  attention/ViT comparison.
+- [09 Hugging Face ViT transfer learning](notebooks/09_hf_vit_transfer_learning.ipynb)
+  [![Open 09 in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Fgram-devAI/deepl-cifar100-image-analysis/blob/main/notebooks/09_hf_vit_transfer_learning.ipynb)
+- Future notebooks: data augmentation and sequence models.
 
 Imported Baseline CNN run summaries from local `results/` artifacts. Binary rows report the best
 local run per task by F1; multiclass rows report the strongest local multiclass run by macro F1.

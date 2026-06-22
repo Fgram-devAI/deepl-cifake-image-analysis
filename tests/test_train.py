@@ -29,6 +29,20 @@ def test_build_model_wires_enabled_augmentation_config():
     assert "augmentation" in layer_names
 
 
+def test_build_model_routes_strong_cnn_to_new_builder():
+    model = _build_model(
+        {
+            "architecture": "strong_cnn",
+            "dropout": 0.35,
+        },
+        num_classes=20,
+    )
+
+    assert model.name == "strong_cnn"
+    assert model.input_shape == (None, 32, 32, 3)
+    assert model.output_shape == (None, 20)
+
+
 def test_build_model_routes_resnet_family_to_new_builder():
     model = _build_model(
         {
@@ -128,6 +142,21 @@ def test_build_model_efficientnet_b3_supports_partial_unfreeze_config():
     assert block6_layers
     assert all(not layer.trainable for layer in block5_layers)
     assert any(layer.trainable for layer in block6_layers)
+
+
+def test_build_model_routes_bilstm_to_sequence_model():
+    model = _build_model(
+        {
+            "architecture": "bilstm",
+            "hidden_units": 8,
+            "dropout": 0.2,
+        },
+        num_classes=20,
+    )
+
+    assert model.name == "bilstm_sequence"
+    assert model.input_shape == (None, 32, 96)
+    assert model.output_shape == (None, 20)
 
 
 def test_build_model_rejects_unknown_architecture():

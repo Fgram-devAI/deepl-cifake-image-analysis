@@ -99,6 +99,15 @@ venv/bin/python -m training.train --config configs/binary/coarse/baseline_cnn_fl
 # Baseline CNN coarse multiclass (20 superclasses)
 venv/bin/python -m training.train --config configs/multiclass/baseline_cnn_coarse.yaml
 
+# Stronger from-scratch CNN coarse multiclass control
+venv/bin/python -m training.train --config configs/multiclass/strong_cnn_coarse.yaml
+
+# Row-sequence Bi-LSTM coarse multiclass baseline
+venv/bin/python -m training.train --config configs/sequence/multiclass/bilstm_coarse.yaml
+
+# Row-sequence LSTM coarse multiclass baseline
+venv/bin/python -m training.train --config configs/sequence/multiclass/lstm_coarse.yaml
+
 # Baseline CNN fine multiclass (100 classes; longer run)
 venv/bin/python -m training.train --config configs/multiclass/baseline_cnn_fine.yaml
 
@@ -164,6 +173,21 @@ local run per task by F1; multiclass rows report the strongest local multiclass 
 | Run | Task | Accuracy | Macro F1 | Top-3 | Top-5 |
 | --- | --- | ---: | ---: | ---: | ---: |
 | Baseline CNN coarse multiclass | 20 coarse classes | 0.2813 | 0.2629 | 0.5235 | 0.6623 |
+
+Imported from-scratch control summaries from local `results/` artifacts. Sequence models consume
+each image as a row-wise sequence `(32, 96)`. These rows are intended as controls, not as claims
+that recurrent models are generally better image classifiers than CNNs.
+
+| Run | Task | Accuracy | Macro F1 | Top-3 | Top-5 |
+| --- | --- | ---: | ---: | ---: | ---: |
+| LSTM sequence coarse | 20 coarse classes | 0.3289 | 0.3105 | 0.5804 | 0.7202 |
+| Bi-LSTM sequence coarse | 20 coarse classes | 0.3559 | 0.3450 | 0.6079 | 0.7407 |
+| Strong CNN regularized + augmented | 20 coarse classes | 0.2833 | 0.2739 | 0.5285 | 0.6563 |
+
+The sequence baselines outperformed the small and stronger from-scratch CNN controls on the coarse
+multiclass task, while all from-scratch models remained far below transfer-learning backbones. This
+suggests that row-wise recurrent models can capture useful global structure on 32x32 coarse classes,
+but pretrained convolutional/mobile architectures still dominate the benchmark.
 
 Imported ResNet-family and DenseNet run summaries from local `results/` artifacts:
 

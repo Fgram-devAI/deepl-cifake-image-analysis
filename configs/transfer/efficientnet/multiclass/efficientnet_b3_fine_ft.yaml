@@ -41,6 +41,6 @@ augmentation:
   rotation: 0.05
   contrast: 0.1
 
-output_dir: results/transfer/efficientnet/multiclass/fine
+output_dir: results/efficientnet_b3_fine_ft
 save_weights: true
 subset_size: null

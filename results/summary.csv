@@ -1,0 +1,4 @@
+task_name,run_name,task_type,label_level,target_labels,accuracy,precision,recall,f1,roc_auc,pr_auc,threshold,top_3_accuracy,top_5_accuracy,macro_f1,weighted_f1
+efficientnet_b0_fine_unfreeze_block6,efficientnet_b0_fine_unfreeze_block6_in128_ep30,multiclass,fine,,0.7671,,,,,,,0.9187,0.951,0.7661146801611258,0.7661146801611257
+efficientnet_b0_fine_unfreeze_block6,efficientnet_b0_fine_unfreeze_block6_in128_ep30,multiclass,fine,,0.7671,,,,,,,0.9187,0.951,0.7661146801611258,0.7661146801611257
+efficientnet_b0_fine_ft,efficientnet_b0_fine_ft_in128_ep40,multiclass,fine,,0.785,,,,,,,0.9329,0.962,0.7840067967530754,0.7840067967530753

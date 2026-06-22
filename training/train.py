@@ -28,6 +28,7 @@ from evaluation.metrics import (
 )
 from models.baseline import build_baseline_cnn
 from models.efficientnet_b0 import build_efficientnet_b0
+from models.efficientnet_b3_fine import build_efficientnet_b3
 from models.resnet_family import build_resnet_family_model
 from training.callbacks import get_callbacks
 from training.class_weights import compute_balanced_class_weights
@@ -62,6 +63,20 @@ def _build_model(config: Dict[str, Any], *, num_classes: int = 1) -> tf.keras.Mo
             weights=config.get("weights", "imagenet"),
             augmentation=config.get("augmentation"),
         )
+    if architecture == "efficientnet_b3":
+        trainable_backbone = bool(config.get("trainable_backbone", False))
+        if "freeze_backbone" in config:
+            trainable_backbone = not bool(config["freeze_backbone"])
+        return build_efficientnet_b3(
+            num_classes=num_classes,
+            resize_to=int(config.get("resize_to", config.get("input_size", 160))),
+            dropout=float(config.get("dropout", 0.4)),
+            trainable_backbone=trainable_backbone,
+            weights=config.get("weights", "imagenet"),
+            augmentation=config.get("augmentation"),
+            unfreeze_from=config.get("unfreeze_from"),
+            freeze_bn=bool(config.get("freeze_bn", True)),
+        )
     if architecture == "resnet_family":
         if "backbone_name" not in config:
             raise KeyError(
@@ -79,7 +94,8 @@ def _build_model(config: Dict[str, Any], *, num_classes: int = 1) -> tf.keras.Mo
         )
     raise ValueError(
         f"Unsupported architecture {architecture!r}. "
-        "Supported: 'baseline_cnn', 'efficientnet_b0', 'resnet_family'."
+        "Supported: 'baseline_cnn', 'efficientnet_b0', 'efficientnet_b3', "
+        "'resnet_family'."
     )
 
 

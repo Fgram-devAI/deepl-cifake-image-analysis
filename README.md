@@ -25,7 +25,8 @@ The project has two parallel deliverables:
    targets.
 2. Implement local data loading and preprocessing, including image view `(32, 32, 3)` and
    row-as-timestep sequence view `(32, 96)`.
-3. Build baseline sequential models: RNN, LSTM, and Bi-LSTM.
+3. Build from-scratch controls: compact baseline CNN, stronger regularized CNN, RNN, LSTM, and
+   Bi-LSTM.
 4. Build attention and transfer-learning models: small ViT, MobileNetV3, EfficientNet, and ResNet.
 5. Add training guardrails: config-driven runs, deterministic seeds, callbacks, metrics, and saved
    result artifacts.
@@ -234,8 +235,8 @@ Imported MobileNetV3Small run summaries:
 
 - **`data/`** - CIFAR-100 loaders, binary task construction, preprocessing, row-as-timestep
   conversion, and masking.
-- **`models/`** - sequential models, small ViT, MobileNetV3, EfficientNet, and ResNet model
-  builders for the local implementation.
+- **`models/`** - baseline CNN, stronger regularized CNN, sequential models, MobileNetV3,
+  EfficientNet, and ResNet model builders for the local implementation.
 - **`training/`** - config-driven training loop, loss functions, callbacks, and result logging.
 - **`evaluation/`** - metrics computation and evaluation utilities.
 - **`experiments/`** - ablation sweep matrix and runners.

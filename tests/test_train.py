@@ -91,6 +91,45 @@ def test_build_model_efficientnet_b0_supports_legacy_freeze_key():
     assert not backbone.trainable
 
 
+def test_build_model_routes_efficientnet_b3_to_new_builder():
+    model = _build_model(
+        {
+            "architecture": "efficientnet_b3",
+            "resize_to": 64,
+            "dropout": 0.4,
+            "trainable_backbone": False,
+            "weights": None,
+        },
+        num_classes=100,
+    )
+
+    assert model.name == "efficientnet_b3_transfer"
+    assert model.input_shape == (None, 32, 32, 3)
+    assert model.output_shape == (None, 100)
+
+
+def test_build_model_efficientnet_b3_supports_partial_unfreeze_config():
+    model = _build_model(
+        {
+            "architecture": "efficientnet_b3",
+            "input_size": 64,
+            "freeze_backbone": False,
+            "unfreeze_from": "block6",
+            "freeze_bn": True,
+            "weights": None,
+        },
+        num_classes=100,
+    )
+
+    backbone = [layer for layer in model.layers if isinstance(layer, tf.keras.Model)][0]
+    block5_layers = [layer for layer in backbone.layers if layer.name.startswith("block5")]
+    block6_layers = [layer for layer in backbone.layers if layer.name.startswith("block6")]
+    assert block5_layers
+    assert block6_layers
+    assert all(not layer.trainable for layer in block5_layers)
+    assert any(layer.trainable for layer in block6_layers)
+
+
 def test_build_model_rejects_unknown_architecture():
     with pytest.raises(ValueError, match="architecture"):
         _build_model({"architecture": "vit"}, num_classes=1)

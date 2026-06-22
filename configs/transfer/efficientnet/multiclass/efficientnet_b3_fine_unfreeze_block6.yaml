@@ -1,0 +1,46 @@
+# Transfer-learning EfficientNetB3 on the 100-class fine multiclass task.
+# Partial fine-tune from block6 with BatchNorm kept frozen.
+
+architecture: efficientnet_b3
+run_name: efficientnet_b3_fine_unfreeze_block6_in160_ep35
+seed: 42
+
+resize_to: 160
+trainable_backbone: true
+unfreeze_from: block6
+freeze_bn: true
+dropout: 0.4
+weights: imagenet
+
+task:
+  type: multiclass
+  label_level: fine
+
+validation:
+  fraction: 0.1
+  stratify: false
+
+class_imbalance:
+  strategy: none
+
+batch_size: 32
+shuffle_buffer: 4096
+
+epochs: 35
+optimizer: adam
+learning_rate: 1e-4
+early_stopping:
+  monitor: val_loss
+  patience: 10
+
+augmentation:
+  enabled: true
+  horizontal_flip: true
+  translation: 0.1
+  zoom: 0.1
+  rotation: 0.05
+  contrast: 0.1
+
+output_dir: results/transfer/efficientnet/multiclass/fine
+save_weights: true
+subset_size: null

@@ -2,14 +2,16 @@
 
 Deep-learning MSc project for NCSR Demokritos and the University of Piraeus. The project
 benchmarks sequential, attention-based, and transfer-learning architectures on CIFAR-100 using
-binary classification tasks derived from fine classes and superclasses.
+binary target-vs-rest tasks, 20-class coarse superclass classification, and 100-class fine-label
+multiclass classification.
 
 ## Project Direction
 
 The main dataset is CIFAR-100. The project studies binary questions such as "cow vs. not cow" or
-superclass-level tasks such as "aquatic mammals vs. all other classes". The goal is to compare how
-different model families handle the same 32x32 visual data under controlled binary classification
-settings.
+"aquatic mammals vs. all other classes", then extends the comparison to the full 20-class coarse
+superclass problem and the 100-class fine-label multiclass problem. The goal is to compare how
+different model families handle the same visual data under controlled binary and multiclass
+classification settings.
 
 The project has two parallel deliverables:
 
@@ -21,8 +23,8 @@ The project has two parallel deliverables:
 
 ## Roadmap
 
-1. Define the CIFAR-100 binary task plan: one or more fine-class targets and one or more superclass
-   targets.
+1. Define the CIFAR-100 task plan: binary target-vs-rest tasks, 20-class coarse classification,
+   and 100-class fine-label classification.
 2. Implement local data loading and preprocessing, including image view `(32, 32, 3)` and
    row-as-timestep sequence view `(32, 96)`.
 3. Build from-scratch controls: compact baseline CNN, stronger regularized CNN, RNN, LSTM, and
